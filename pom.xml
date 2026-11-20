@@ -21,8 +21,8 @@
 
     <repositories>
         <repository>
-            <id>papermc-repo</id>
-            <url>https://papermc.io</url>
+            <id>purpurmc</id>
+            <url>https://purpurmc.org</url>
         </repository>
         <repository>
             <id>jitpack-repo</id>
@@ -32,8 +32,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
+            <groupId>org.purpurmc.purpur</groupId>
+            <artifactId>purpur-api</artifactId>
             <version>${paper.version}</version>
             <scope>provided</scope>
         </dependency>
