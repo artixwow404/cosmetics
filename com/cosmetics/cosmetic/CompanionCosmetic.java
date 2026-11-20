@@ -1,5 +1,7 @@
 package com.cosmetics.cosmetic;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import com.cosmetics.CosmeticsPlugin;
 import com.cosmetics.manager.PetManager;
 import com.google.gson.JsonObject;
@@ -72,11 +74,14 @@ public class CompanionCosmetic extends Cosmetic {
         getParticleManager().spawnParticle(particle, companionLoc, 2, 0.1, 0.1, 0.1, 0, color);
     }
 
-    public EntityType getEntityType() {
+        public EntityType getEntityType() {
         try {
-            return EntityType.valueOf(getProperty("entity-type", "END_ROD").toUpperCase());
+            return EntityType.valueOf(getProperty("entity-type", "ITEM_DISPLAY").toUpperCase());
         } catch (IllegalArgumentException e) {
-            return EntityType.END_ROD;
+            return EntityType.ITEM_DISPLAY;
+        }
+    }
+
         }
     }
 
