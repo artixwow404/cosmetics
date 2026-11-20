@@ -55,7 +55,7 @@ public class CompanionCosmetic extends Cosmetic {
         double orbitRadius = getPropertyDouble("orbit-radius", 2.0);
         double orbitSpeed = getPropertyDouble("orbit-speed", 0.05);
         double scale = getPropertyDouble("scale", 0.3);
-        String entityTypeStr = getProperty("entity-type", "END_ROD");
+        String entityTypeStr = getProperty("entity-type", "ITEM_DISPLAY");
 
         double time = System.currentTimeMillis() * orbitSpeed;
         double angle = time + player.getUniqueId().hashCode() * 0.1;
@@ -74,14 +74,11 @@ public class CompanionCosmetic extends Cosmetic {
         getParticleManager().spawnParticle(particle, companionLoc, 2, 0.1, 0.1, 0.1, 0, color);
     }
 
-        public EntityType getEntityType() {
+    public EntityType getEntityType() {
         try {
             return EntityType.valueOf(getProperty("entity-type", "ITEM_DISPLAY").toUpperCase());
         } catch (IllegalArgumentException e) {
             return EntityType.ITEM_DISPLAY;
-        }
-    }
-
         }
     }
 
