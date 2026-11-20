@@ -3,9 +3,15 @@ package com.cosmetics.manager;
 import com.cosmetics.CosmeticsPlugin;
 import com.cosmetics.cosmetic.PetCosmetic;
 import com.cosmetics.cosmetic.CompanionCosmetic;
+import com.cosmetics.util.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.*;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 
 import java.util.Map;
@@ -32,9 +38,9 @@ public class PetManager {
         Entity entity = spawnLoc.getWorld().spawnEntity(spawnLoc, entityType);
         if (entity instanceof Animals animal) {
             configurePet(animal, cosmetic, player);
-        } else if (entity instanceof Tameable tameable) {
+        } else if (entity instanceof Tameable tameable && entity instanceof Animals animal) {
             tameable.setOwner(player);
-            configurePet((Animals) entity, cosmetic, player);
+            configurePet(animal, cosmetic, player);
         } else if (entity instanceof LivingEntity living) {
             configurePet(living, cosmetic, player);
         }
@@ -69,16 +75,17 @@ public class PetManager {
                 fox.setFoxType(Fox.Type.valueOf(variant.toUpperCase()));
             } catch (IllegalArgumentException ignored) {}
         } else if (animal instanceof Wolf wolf && !variant.isEmpty()) {
-            try {
-                wolf.setVariant(Wolf.Variant.valueOf(variant.toUpperCase()));
-            } catch (IllegalArgumentException ignored) {}
+            Wolf.Variant wolfVariant = Registry.WOLF_VARIANT.get(NamespacedKey.minecraft(variant.toLowerCase()));
+            if (wolfVariant != null) {
+                wolf.setVariant(wolfVariant);
+            }
         } else if (animal instanceof Rabbit rabbit && !variant.isEmpty()) {
             try {
                 rabbit.setRabbitType(Rabbit.Type.valueOf(variant.toUpperCase()));
             } catch (IllegalArgumentException ignored) {}
         } else if (animal instanceof Panda panda && !variant.isEmpty()) {
             try {
-                panda.setMainGene(org.bukkit.entity.Panda.Gene.valueOf(variant.toUpperCase()));
+                panda.setMainGene(Panda.Gene.valueOf(variant.toUpperCase()));
             } catch (IllegalArgumentException ignored) {}
         } else if (animal instanceof Axolotl axolotl && !variant.isEmpty()) {
             try {
@@ -87,8 +94,8 @@ public class PetManager {
         }
 
         double scale = cosmetic.getScale();
-        if (scale != 1.0 && animal instanceof LivingEntity living) {
-            living.setScale((float) scale);
+        if (scale != 1.0) {
+            setEntityScale(animal, (float) scale);
         }
     }
 
@@ -104,12 +111,17 @@ public class PetManager {
 
         double scale = cosmetic.getScale();
         if (scale != 1.0) {
-            entity.setScale((float) scale);
+            setEntityScale(entity, (float) scale);
         }
     }
 
     public void despawnPet(Player player) {
-        Entity entity = activePets.remove(player.getUniqueId());
+        if (player == null) return;
+        despawnPet(player.getUniqueId());
+    }
+
+    public void despawnPet(UUID playerId) {
+        Entity entity = activePets.remove(playerId);
         if (entity != null && entity.isValid()) {
             entity.remove();
         }
@@ -131,18 +143,36 @@ public class PetManager {
     private void configureCompanion(Entity entity, CompanionCosmetic cosmetic) {
         entity.setCustomName(MessageUtil.color(cosmetic.getName()));
         entity.setCustomNameVisible(false);
-        entity.setRemoveWhenFarAway(false);
         entity.setInvulnerable(true);
-        entity.setCollidable(false);
         entity.setGravity(false);
         entity.setSilent(true);
-        entity.setAI(false);
-        entity.setInvisible(false);
         entity.setGlowing(true);
 
-        double scale = cosmetic.getScale();
-        if (entity instanceof LivingEntity living && scale != 1.0) {
-            living.setScale((float) scale);
+        if (entity instanceof LivingEntity living) {
+            living.setRemoveWhenFarAway(false);
+            living.setCollidable(false);
+            living.setAI(false);
+            living.setInvisible(false);
+
+            double scale = cosmetic.getScale();
+            if (scale != 1.0) {
+                setEntityScale(living, (float) scale);
+            }
+        } else if (entity instanceof Display display) {
+            display.setTeleportDuration(2);
+            double scale = cosmetic.getScale();
+            if (scale != 1.0) {
+                Transformation tr = display.getTransformation();
+                tr.getScale().set((float) scale, (float) scale, (float) scale);
+                display.setTransformation(tr);
+            }
+        }
+    }
+
+    private void setEntityScale(LivingEntity entity, float scale) {
+        AttributeInstance attr = entity.getAttribute(Attribute.SCALE);
+        if (attr != null) {
+            attr.setBaseValue(scale);
         }
     }
 
@@ -169,7 +199,7 @@ public class PetManager {
             Player player = Bukkit.getPlayer(playerId);
 
             if (player == null || !player.isOnline() || !pet.isValid()) {
-                despawnPet(player);
+                despawnPet(playerId);
                 continue;
             }
 
@@ -197,7 +227,17 @@ public class PetManager {
         Location playerLoc = player.getLocation();
         Location petLoc = pet.getLocation();
 
+        if (!petLoc.getWorld().equals(playerLoc.getWorld())) {
+            pet.teleport(playerLoc);
+            return;
+        }
+
         double distance = petLoc.distance(playerLoc);
+        if (distance > 15) {
+            pet.teleport(playerLoc.clone().add(1, 0, 1));
+            return;
+        }
+
         if (distance > 5) {
             Location target = playerLoc.clone().add(
                 (Math.random() - 0.5) * 2,
@@ -208,8 +248,8 @@ public class PetManager {
             pet.setVelocity(pet.getVelocity().add(direction));
         }
 
-        if (pet instanceof LivingEntity living) {
-            living.getPathfinder().moveTo(playerLoc, 1.0);
+        if (pet instanceof Mob mob) {
+            mob.getPathfinder().moveTo(playerLoc, 1.0);
         }
     }
 
