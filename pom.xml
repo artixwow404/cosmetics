@@ -21,11 +21,11 @@
 
     <repositories>
         <repository>
-            <id>papermc</id>
+            <id>papermc-repo</id>
             <url>https://papermc.io</url>
         </repository>
         <repository>
-            <id>jitpack</id>
+            <id>jitpack-repo</id>
             <url>https://jitpack.io</url>
         </repository>
     </repositories>
