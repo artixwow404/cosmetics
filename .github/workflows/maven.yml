@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,9 +19,8 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B -U clean package --file pom.xml
     - name: Upload JAR
       uses: actions/upload-artifact@v4
       with:
